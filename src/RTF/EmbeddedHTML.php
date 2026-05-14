@@ -21,7 +21,7 @@ class EmbeddedHTML
         $html = '';
         $ignoreTag = '';
 
-        $scanner = new StringScanner($data);
+        $scanner = new \SourcePot\RTF\StringScanner($data);
         // fix cf ruby-msg - skip the \htmltag element's parameter
         if ($scanner->scanUntilRegex('/\x5c\*\x5chtmltag(\d+) ?/') === FALSE) {
             return '';
