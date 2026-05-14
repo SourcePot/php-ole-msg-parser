@@ -6,6 +6,10 @@ namespace Opt\OLE;
 use Exception;
 use stdClass;
 
+require_once '../RTF/StringScanner.php';
+require_once '../RTF/EmbeddedHTML.php';
+require_once '../RTF/CompressionCodec.php';
+
 /**
  * High-level parser that turns an OleFile-backed Outlook .msg into
  * headers, body content, and attachments for simple consumption.
