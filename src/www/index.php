@@ -65,7 +65,7 @@ if (empty($msgFile)) {
         if ((is_object($value)?get_class($value):'') == 'DateTime'){
             $value = $value->format(DATE_RFC2822);
         }
-        $headerDiv.='<p style="float:left;clear:both;margin:2px 0;">'.$key.': '.$value.'</p>';
+        $headerDiv.='<p style="float:left;clear:both;margin:2px 0;">'.$key.': '.htmlentities(strval($value), ENT_QUOTES, 'UTF-8').'</p>';
     }
 
     $headerDiv.='</div>';
@@ -77,6 +77,7 @@ if (empty($msgFile)) {
 
     $html.='<h2 style="float:left;clear:both;">Attachments</h2>';
     foreach ($message->attachments as $attachment){
+        file_put_contents('../tests/'.$attachment['filename'],$attachment['data']);
         $data=$attachment['data'];
         unset($attachment['data']);
         $attachmentDiv='<div style="float:left;clear:none;border:1px dotted #000;padding:5px;margin:5px;width:auto;">';
@@ -86,19 +87,8 @@ if (empty($msgFile)) {
         $attachmentDiv.='</div>';
         $html.=$attachmentDiv;
 
-        // file_put_contents($attachment['filename'], base64_decode($attachment['data']));
     }
 
 }
-
-
-/*
-
-print_r($message->headers);
-echo $message->body;
-foreach ($message->attachments as $attachment) {
-    file_put_contents($attachment['filename'], base64_decode($attachment['data']));
-}
-*/
 echo $html;
 ?>
