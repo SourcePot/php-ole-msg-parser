@@ -5,9 +5,7 @@
 */
 declare(strict_types=1);
 
-namespace SourcePot\RTF;
-
-
+namespace Opt\OLE\RTF;
 
 class StringScanner
 {

@@ -6,10 +6,6 @@ namespace Opt\OLE;
 use Exception;
 use stdClass;
 
-require_once '../RTF/StringScanner.php';
-require_once '../RTF/EmbeddedHTML.php';
-require_once '../RTF/CompressionCodec.php';
-
 /**
  * High-level parser that turns an OleFile-backed Outlook .msg into
  * headers, body content, and attachments for simple consumption.
@@ -91,7 +87,7 @@ class MsgParser {
             }
         }
         if (isset($props['RTF_COMPRESSED'])){
-                $rtfDecoder=new \SourcePot\RTF\CompressionCodec();
+                $rtfDecoder=new \Opt\OLE\RTF\CompressionCodec();
                 $rtf = $rtfDecoder->decode($props['RTF_COMPRESSED']);
                 $msg->attachments[] = [
                     'filename' => 'body.rtf',
