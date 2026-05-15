@@ -1,7 +1,7 @@
 # php-ole-msg-parser
 
 Minimal PHP library for parsing Outlook .msg files stored in OLE compound documents.
-This packaged is derived from koopa/php-ole-msg-parser.
+This packaged is derived from _koopa/php-ole-msg-parser_.
 
 ## Features
 
