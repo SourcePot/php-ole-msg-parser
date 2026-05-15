@@ -1,17 +1,19 @@
 # php-ole-msg-parser
 
 Minimal PHP library for parsing Outlook .msg files stored in OLE compound documents.
+This packaged is derived from koopa/php-ole-msg-parser.
 
 ## Features
 
 - Reads raw OLE compound streams without external dependencies
-- Extracts headers, plain-text body, RTF body, and attachments from .msg files
+- Extracts headers, plain-text body, RTF body (as attachment) and attachments from .msg files
 - Provides lightweight loader interfaces for custom property handling
+- Test web page included: .../php-ole-msg-parser/src/www/index.php
 
 ## Installation
 
 ```bash
-composer require koopa/php-ole-msg-parser
+composer require sourcepot/php-ole-msg-parser
 ```
 
 ## Usage
@@ -19,21 +21,22 @@ composer require koopa/php-ole-msg-parser
 ```php
 require __DIR__ . '/vendor/autoload.php';
 
-use Opt\OLE\MsgParser;
-
-$parser = new MsgParser('path/to/message.msg');
+$parser = new \Opt\OLE\MsgParser('path/to/message.msg');
 $message = $parser->parse();
 
-print_r($message->headers);
-echo $message->body;
-foreach ($message->attachments as $attachment) {
-    file_put_contents($attachment['filename'], base64_decode($attachment['data']));
-}
-```
+$headers = $message->headers;
+
+$transportLayerRawHeaders=$headers['TRANSPORT_MESSAGE_HEADERS'];
+
+$body = $message->body;
+
+foreach ($message->attachments as $attachment){
+    file_put_contents($attachment['filename'], $attachment['data']);
+}        
 
 ## Requirements
 
-- PHP 7.4+
+- PHP 8.0+
 - mbstring extenstion
 
 ## License
