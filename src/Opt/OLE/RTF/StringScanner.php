@@ -80,10 +80,9 @@ class StringScanner
         return $this->last;
     }
 
-
     public function __toString()
     {
         return substr($this->buffer, $this->pos);
     }
 }
-        
+?>
