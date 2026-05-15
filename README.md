@@ -34,6 +34,7 @@ foreach ($message->attachments as $attachment){
     file_put_contents($attachment['filename'], $attachment['data']);
 }        
 
+```
 ## Requirements
 
 - PHP 8.0+
