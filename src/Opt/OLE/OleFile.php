@@ -359,7 +359,7 @@ class Integer64Loader implements LoaderInterface {
 class IntTimeLoader implements LoaderInterface {
     public function load(string $value, array $options = []): \DateTime {
         $int64 = (new Integer64Loader())->load($value);
-        $seconds = $int64 / 10000000;
+        $seconds = round($int64 / 10000000);
         $dt = new \DateTime("1601-01-01", new \DateTimeZone("UTC"));
         $dt->modify("+$seconds seconds");
         return $dt;
@@ -396,3 +396,4 @@ class EmbeddedMessageLoader implements LoaderInterface {
         return $value;
     }
 }
+?>
