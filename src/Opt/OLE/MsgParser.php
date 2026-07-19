@@ -509,7 +509,8 @@ class MsgParser {
     /**
      * @param string $filename Absolute path to a .msg file inside an OLE container.
      */
-    public function __construct(string $filename) {
+    public function __construct(string $filename)
+    {
         $this->ole = new OleFile($filename);
         $this->streams = $this->ole->getStreams();
     }
@@ -520,7 +521,8 @@ class MsgParser {
      * @return \stdClass
      * @throws \Exception When the root properties stream is missing.
      */
-    public function parse(): stdClass {
+    public function parse():stdClass
+    {
         if (isset($this->streams['__properties_version1.0'])) {
             $data = $this->streams['__properties_version1.0'];
             return $this->parseMessageStream($data, TRUE, $this->streams, '');
@@ -531,7 +533,8 @@ class MsgParser {
     /**
      * Recursively walk a message stream and build a stdClass with headers/body/attachments.
      */
-    protected function parseMessageStream(string $data, bool $isTopLevel, array $container, string $basePath): stdClass {
+    protected function parseMessageStream(string $data, bool $isTopLevel, array $container, string $basePath):stdClass
+    {
         $props = $this->parseProperties($data, $isTopLevel, $container, $basePath);
         $msg = new stdClass();
         $msg->headers = $props;    
@@ -572,14 +575,10 @@ class MsgParser {
             }
         }
         if (isset($props['RTF_COMPRESSED'])){
-                $rtfDecoder=new \Opt\OLE\RTF\CompressionCodec();
-                $rtf = $rtfDecoder->decode($props['RTF_COMPRESSED']);
-                $msg->attachments[] = [
-                    'filename' => 'body.rtf',
-                    'filesize' => strlen($rtf),
-                    'mimeType' => 'application/rtf',
-                    'data'     => $rtf
-                ];
+            $rtfDecoder=new \Opt\OLE\RTF\CompressionCodec();
+            $rtf = $rtfDecoder->decode($props['RTF_COMPRESSED']);
+            $attachment = new \Opt\OLE\Attachment('body.rtf', 'application/rtf', $rtf, $props);
+            $msg->attachments[] = $attachment;
         }
         return $msg;
     }
@@ -587,7 +586,8 @@ class MsgParser {
     /**
      * Convert an attachment storage into a lightweight associative array.
      */
-    protected function processAttachment(string $storageName, array $container): ?array {
+    protected function processAttachment(string $storageName, array $container):\Opt\OLE\Attachment
+    {
         $propsStreamName = $storageName . '/__properties_version1.0';
         if (!isset($container[$propsStreamName])) {
             return NULL;
@@ -601,18 +601,14 @@ class MsgParser {
         $filename = $props['ATTACH_LONG_FILENAME'] ?? $props['ATTACH_FILENAME'] ?? $props['DISPLAY_NAME'] ?? 'attachment';
         $filename = basename($filename);
         $mimeType = $props['ATTACH_MIME_TAG'] ?? 'application/octet-stream';
-        return [
-            'filename' => $filename,
-            'filesize' => strlen($blob),
-            'mimeType' => $mimeType,
-            'data'     => $blob
-        ];
+        return $attachment = new \Opt\OLE\Attachment($filename,$mimeType, $blob, $props);
     }
 
     /**
      * Decode a properties stream using the registered property tags and loaders.
      */
-    protected function parseProperties(string $data, bool $isTopLevel, array $container, string $basePath): array {
+    protected function parseProperties(string $data, bool $isTopLevel, array $container, string $basePath):array
+    {
         $props = [];
         $offset = $isTopLevel ? 32 : 24;
         while ($offset + 16 <= strlen($data)) {
@@ -657,7 +653,7 @@ class MsgParser {
     /**
      * Resolve string/binary properties that are stored in dedicated substg streams.
      */
-    protected function loadStreamProperty(array $container, int $ptag, array $loaderMap, array $props, string $basePath): ?string
+    protected function loadStreamProperty(array $container, int $ptag, array $loaderMap, array $props, string $basePath):?string
     {
         $tagName = self::PROPERTY_TAGS[$ptag][0] ?? '';
         $encodings = $this->getEncodings($props, $tagName);
@@ -682,7 +678,8 @@ class MsgParser {
     /**
      * Determine preferred encoding order for the given property tag.
      */
-    protected function getEncodings(array $props, string $tagName): array {
+    protected function getEncodings(array $props, string $tagName):array
+    {
         $encodings = [];
         $bodyEncoding = isset($props['PR_INTERNET_CPID']) && isset(self::CODE_PAGES[$props['PR_INTERNET_CPID']])
             ? self::CODE_PAGES[$props['PR_INTERNET_CPID']] : NULL;
@@ -704,7 +701,8 @@ class MsgParser {
     /**
      * Map a property type to a loader implementation.
      */
-    protected function getLoader(int $ptype): ?LoaderInterface {
+    protected function getLoader(int $ptype):?LoaderInterface
+    {
         switch ($ptype) {
             case 0x1:  return new NullLoader();
             case 0x2:  return new Integer16Loader();
@@ -723,7 +721,8 @@ class MsgParser {
     /**
      * Collapse raw RFC822-style headers into a key/value array.
      */
-    protected function parseHeaders(string $headers): array {
+    protected function parseHeaders(string $headers):array
+    {
         $result = [];
         $lines = preg_split("/\r\n|\n|\r/", $headers);
         $currentHeader = '';

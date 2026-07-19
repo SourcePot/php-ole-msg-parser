@@ -6,7 +6,7 @@ namespace Opt\OLE;
 /**
  * Minimal OLE Compound File parser tailored for Outlook .msg payloads.
  */
-class OleFile {
+class OleFile{
     protected string $filename;
     protected string $data;
     protected int $sectorSize;
@@ -25,17 +25,18 @@ class OleFile {
     protected array $rawDirectoryEntries = [];
     /** @var array<string, array<string, mixed>> */
     protected array $storages = [];
-    /** @var array<string, int>|null */
-    protected ?array $rootEntry = null;
-    protected ?int $miniFatStart = null;
+    /** @var array<string, int>|NULL */
+    protected ?array $rootEntry = NULL;
+    protected ?int $miniFatStart = NULL;
     protected int $miniFatSectorCount = 0;
-    protected ?int $difatStart = null;
+    protected ?int $difatStart = NULL;
     protected int $difatSectorCount = 0;
 
     /**
      * @param string $filename Absolute path to an OLE compound document.
      */
-    public function __construct(string $filename) {
+    public function __construct(string $filename)
+    {
         $this->filename = $filename;
         $this->data = file_get_contents($filename);
         if (substr($this->data, 0, 8) !== "\xD0\xCF\x11\xE0\xA1\xB1\x1A\xE1") {
@@ -51,7 +52,8 @@ class OleFile {
     /**
      * Parse the file header to establish sector sizes and FAT pointers.
      */
-    protected function parseHeader(): void {
+    protected function parseHeader():void
+    {
         $header = substr($this->data, 0, 512);
         $sectorShift = unpack('v', substr($header, 30, 2))[1];
         $this->sectorSize = 1 << $sectorShift;
@@ -72,13 +74,14 @@ class OleFile {
     /**
      * Build the FAT chain using DIFAT entries.
      */
-    protected function buildFAT(): void {
+    protected function buildFAT():void
+    {
         $this->fat = [];
 
         foreach ($this->difat as $fatSector) {
             if ($fatSector == 0xFFFFFFFF) continue;
             $sectorData = $this->getSector($fatSector);
-            if ($sectorData === false) continue;
+            if ($sectorData === FALSE) continue;
             $fatEntries = array_values(unpack('V*', $sectorData));
             $this->fat = array_merge($this->fat, $fatEntries);
         }
@@ -91,7 +94,8 @@ class OleFile {
     /**
      * Build the mini FAT used for short streams.
      */
-    protected function buildMiniFAT(): void {
+    protected function buildMiniFAT():void
+    {
         if ($this->miniFatSectorCount <= 0 || $this->miniFatStart === 0xFFFFFFFE) {
             return;
         }
@@ -105,12 +109,13 @@ class OleFile {
     /**
      * Read any additional DIFAT sectors linked from the header block.
      */
-    protected function loadAdditionalDIFATSectors(): void {
+    protected function loadAdditionalDIFATSectors():void
+    {
         $current = $this->difatStart;
         $remaining = $this->difatSectorCount;
         while ($current !== 0xFFFFFFFE && $remaining > 0) {
             $sectorData = $this->getSector($current);
-            if ($sectorData === false) {
+            if ($sectorData === FALSE) {
                 break;
             }
             $entries = array_values(unpack('V127', substr($sectorData, 0, 127 * 4)));
@@ -126,7 +131,8 @@ class OleFile {
     /**
      * Walk the directory stream and materialize entries and storages.
      */
-    protected function readDirectory(): void {
+    protected function readDirectory():void
+    {
         $dirStart = unpack('V', substr($this->data, 48, 4))[1];
         $dirData = $this->readChain($dirStart);
         $entrySize = 128;
@@ -134,7 +140,7 @@ class OleFile {
         $this->rawDirectoryEntries = [];
         for ($i = 0; $i < $numEntries; $i++) {
             $entry = substr($dirData, $i * $entrySize, $entrySize);
-            if ($entry === false || $entry === '') {
+            if ($entry === FALSE || $entry === '') {
                 continue;
             }
             $nameLength = unpack('v', substr($entry, 64, 2))[1];
@@ -170,7 +176,8 @@ class OleFile {
     /**
      * Traverse the red-black directory tree recursively.
      */
-    protected function traverseDirectory(int $index, string $parentPath): void {
+    protected function traverseDirectory(int $index, string $parentPath):void
+    {
         if ($index === 0xFFFFFFFF || !isset($this->rawDirectoryEntries[$index])) {
             return;
         }
@@ -213,7 +220,8 @@ class OleFile {
     /**
      * Cache the mini stream so mini FAT chains can be read quickly.
      */
-    protected function loadMiniStream(): void {
+    protected function loadMiniStream():void
+    {
         if (!$this->rootEntry || $this->rootEntry['size'] <= 0) {
             return;
         }
@@ -223,7 +231,8 @@ class OleFile {
     /**
      * Fetch a named stream from the directory.
      */
-    public function getStream(string $name): string {
+    public function getStream(string $name):string
+    {
         if (!isset($this->directoryEntries[$name])) {
             throw new \Exception("Stream '$name' not found.");
         }
@@ -237,7 +246,8 @@ class OleFile {
     /**
      * Return all available streams keyed by directory name.
      */
-    public function getStreams(): array {
+    public function getStreams():array
+    {
         $streams = [];
         foreach ($this->directoryEntries as $name => $entry) {
             if ($entry['type'] == 2) {
@@ -250,7 +260,8 @@ class OleFile {
     /**
      * Return the raw bytes for a sector index.
      */
-    protected function getSector(int $sector): string {
+    protected function getSector(int $sector):string
+    {
         $offset = ($sector + 1) * $this->sectorSize;
         return substr($this->data, $offset, $this->sectorSize);
     }
@@ -258,9 +269,10 @@ class OleFile {
     /**
      * Follow FAT pointers until the chain terminates.
      */
-    protected function readChain(?int $startSector, ?int $size = null): string {
+    protected function readChain(?int $startSector, ?int $size = NULL):string
+    {
         $specialValues = [0xFFFFFFFE, 0xFFFFFFFF, -2, -1];
-        if ($startSector === null || in_array($startSector, $specialValues, true)) {
+        if ($startSector === NULL || in_array($startSector, $specialValues, TRUE)){
             return '';
         }
 
@@ -271,20 +283,21 @@ class OleFile {
         $chain = "";
         $sector = $startSector;
 
-        while (isset($this->fat[$sector]) && $sector != 0xFFFFFFFE) {
+        while (isset($this->fat[$sector]) && $sector != 0xFFFFFFFE){
             $chain .= $this->getSector($sector);
             $sector = $this->fat[$sector] ?? 0xFFFFFFFE;
         }
 
-        return ($size !== null) ? substr($chain, 0, $size) : $chain;
+        return ($size !== NULL) ? substr($chain, 0, $size) : $chain;
     }
 
     /**
      * Follow mini FAT pointers using the cached mini stream.
      */
-    protected function readMiniChain(?int $startSector, ?int $size = null): string {
+    protected function readMiniChain(?int $startSector, ?int $size = NULL):string
+    {
         $specialValues = [0xFFFFFFFE, 0xFFFFFFFF, -2, -1];
-        if ($startSector === null || in_array($startSector, $specialValues, true)) {
+        if ($startSector === NULL || in_array($startSector, $specialValues, TRUE)){
             return '';
         }
         if ($this->miniStream === '' || empty($this->miniFat)) {
@@ -308,13 +321,14 @@ class OleFile {
             }
         }
 
-        return ($size !== null) ? substr($chain, 0, $size) : $chain;
+        return ($size !== NULL) ? substr($chain, 0, $size) : $chain;
     }
 
 }
 
 /** Loader interfaces and implementations. */
-interface LoaderInterface {
+interface LoaderInterface
+{
     /**
      * Load a value from a binary stream.
      *
@@ -325,39 +339,45 @@ interface LoaderInterface {
     public function load(string $value, array $options = []);
 }
 
-class NullLoader implements LoaderInterface {
-    public function load(string $value, array $options = []): ?string {
-        return null;
+class NULLLoader implements LoaderInterface{
+    public function load(string $value, array $options = []):?string
+    {
+        return NULL;
     }
 }
 
-class BooleanLoader implements LoaderInterface {
-    public function load(string $value, array $options = []): bool {
+class BooleanLoader implements LoaderInterface{
+    public function load(string $value, array $options = []):bool
+    {
         return (ord($value[0]) === 1);
     }
 }
 
-class Integer16Loader implements LoaderInterface {
-    public function load(string $value, array $options = []): int {
+class Integer16Loader implements LoaderInterface{
+    public function load(string $value, array $options = []):int 
+    {
         return unpack('v', substr($value, 0, 2))[1];
     }
 }
 
-class Integer32Loader implements LoaderInterface {
-    public function load(string $value, array $options = []): int {
+class Integer32Loader implements LoaderInterface{
+    public function load(string $value, array $options = []):int
+    {
         return unpack('V', substr($value, 0, 4))[1];
     }
 }
 
-class Integer64Loader implements LoaderInterface {
-    public function load(string $value, array $options = []): int {
+class Integer64Loader implements LoaderInterface{
+    public function load(string $value, array $options = []):int
+    {
         $arr = unpack('Vlow/Vhigh', substr($value, 0, 8));
         return $arr['low'] + ($arr['high'] << 32);
     }
 }
 
-class IntTimeLoader implements LoaderInterface {
-    public function load(string $value, array $options = []): \DateTime {
+class IntTimeLoader implements LoaderInterface{
+    public function load(string $value, array $options = []):\DateTime
+    {
         $int64 = (new Integer64Loader())->load($value);
         $seconds = round($int64 / 10000000);
         $dt = new \DateTime("1601-01-01", new \DateTimeZone("UTC"));
@@ -366,12 +386,13 @@ class IntTimeLoader implements LoaderInterface {
     }
 }
 
-class String8Loader implements LoaderInterface {
-    public function load(string $value, array $options = []): string {
+class String8Loader implements LoaderInterface{
+    public function load(string $value, array $options = []):string
+    {
         $encodings = $options['encodings'] ?? ['cp1252'];
         foreach ($encodings as $enc) {
             $converted = @mb_convert_encoding($value, 'UTF-8', $enc);
-            if ($converted !== false) {
+            if ($converted !== FALSE){
                 return $converted;
             }
         }
@@ -379,20 +400,23 @@ class String8Loader implements LoaderInterface {
     }
 }
 
-class UnicodeLoader implements LoaderInterface {
-    public function load(string $value, array $options = []): string {
+class UnicodeLoader implements LoaderInterface{
+    public function load(string $value, array $options = []):string
+    {
         return mb_convert_encoding($value, 'UTF-8', 'UTF-16LE');
     }
 }
 
-class BinaryLoader implements LoaderInterface {
-    public function load(string $value, array $options = []): string {
+class BinaryLoader implements LoaderInterface{
+    public function load(string $value, array $options = []):string
+    {
         return $value;
     }
 }
 
-class EmbeddedMessageLoader implements LoaderInterface {
-    public function load(string $value, array $options = []): string {
+class EmbeddedMessageLoader implements LoaderInterface{
+    public function load(string $value, array $options = []):string
+    {
         return $value;
     }
 }
